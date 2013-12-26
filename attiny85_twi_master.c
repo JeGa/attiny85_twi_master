@@ -1,12 +1,11 @@
 /*
- * SDA can be set with SDA-reg or Port-reg. But SDA-reg. overwrites
- * Port-reg.
+ * SDA can be set with SDA register or Port register. However,
+ * be careful because SDA ans SCL are open collector outputs.
+ * -> This means the bus is a logical AND!
  *
  * 1 -> released state for SDA and SCL
  *
- * SDA muss immer nach manuellem own released werden wegen ver-UNDUNG!
- * Sons kann ueber USIDR nicht auf den Port zugegrifen werden.
- *
+ * SDA has to be released after each pull.
  */
 
 #include "attiny85_twi_master.h"
