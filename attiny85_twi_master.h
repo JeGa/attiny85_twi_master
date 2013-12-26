@@ -37,9 +37,9 @@ void init_twi_connection(
     twi_connection_t *con,
     unsigned char addr,
     unsigned char rw);
-unsigned char start_twi(twi_connection_t *con);
 
-//!!
-void send_twi_byte(unsigned char *byte);
+int start_twi(twi_connection_t *con);
+int stop_twi(void);
+void send_twi(unsigned char *buffer, int size);
 
 #endif

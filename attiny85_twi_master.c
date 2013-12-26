@@ -15,7 +15,9 @@
 // Static prototypes
 static int send_start_condition(void);
 static int send_address(twi_connection_t *con);
-//!!void send_twi_byte(unsigned char *byte);
+static int send_twi_byte(unsigned char *byte);
+static int get_ack(void);
+
 static void wait_twi(void);
 static void wait_twi_half(void);
 static void clock_release(void);
@@ -24,6 +26,9 @@ static void data_release(void);
 static void data_down(void);
 static void reset_twi_status_register(void);
 
+/*
+ * Initialzes the TWI registers.
+ */
 void init_twi(void)
 {
     // Enable pullups
@@ -47,9 +52,22 @@ void init_twi(void)
 }
 
 /*
+ * Initializes the connection struct.
+ */
+void init_twi_connection(
+    twi_connection_t *con,
+    unsigned char addr,
+    unsigned char rw)
+{
+    con->client_address = addr;
+    con->rw = rw;
+    con->send_data = (addr << 1) | (rw);
+}
+
+/*
  * Sends start condition and the slave address.
  */
-unsigned char start_twi(twi_connection_t *con)
+int start_twi(twi_connection_t *con)
 {
     if (!send_start_condition())
         return 0;
@@ -60,14 +78,16 @@ unsigned char start_twi(twi_connection_t *con)
 /*
  * Sends stop condition.
  */
-int stop_twi(twi_connection_t *con)
+int stop_twi(void)
 {
     // == Period start
 
-    // Stop condition
+    data_down();
+    wait_twi_half();
+
     clock_release();
+    wait_twi_half();
     data_release();
-    wait_twi();
 
     // == Period end
 
@@ -78,24 +98,13 @@ int stop_twi(twi_connection_t *con)
     return 1;
 }
 
-void send_twi(void)
+//!! TODO
+void send_twi(unsigned char *buffer, int size)
 {
-
+    send_twi_byte(buffer);
 }
 
 // ===================================================================
-
-// Helper functions for twi_connection struct
-
-void init_twi_connection(
-    twi_connection_t *con,
-    unsigned char addr,
-    unsigned char rw)
-{
-    con->client_address = addr;
-    con->rw = rw;
-    con->send_data = (addr << 1) | (rw);
-}
 
 // Other helper functions
 
@@ -128,15 +137,51 @@ static int send_start_condition(void)
 
 static int send_address(twi_connection_t *con)
 {
+    int result;
+
+    _delay_ms(500);
+
+    result = send_twi_byte(&(con->send_data));
+
+    _delay_ms(500);
+
+    return result;
+}
+
+// Sends one byte and checks ack.
+static int send_twi_byte(unsigned char *byte)
+{
+    int i;
+
+    USIDR = *byte;
+
+    for (i = 0; i < 8; ++i) {
+
+        // == Period start
+
+        clock_release();
+        wait_twi_half();
+        clock_down();
+        wait_twi_half();
+
+        // == Period end
+
+        USICR |= (1 << USICLK); // Shift data register
+    }
+
+    // release
+    USIDR = 0xFF;
+
+    reset_twi_status_register();
+
+    _delay_ms(200);
+
+    return get_ack();
+}
+
+static int get_ack(void)
+{
     unsigned char result;
-
-    _delay_ms(500);
-
-    send_twi_byte(&(con->send_data));
-
-    // Get ACK =======================================================
-
-    _delay_ms(500);
 
     // SDA as input
     DDR_TWI &= ~(1 << SDA);
@@ -157,45 +202,16 @@ static int send_address(twi_connection_t *con)
     // Save the result
     result = USIDR;
 
-    // release //!!
+    // release
     USIDR = 0xFF;
 
     // SDA as output
     DDR_TWI |= (1 << SDA);
 
-    //!! Check the result (Has to be 0!)
+    // Check result
     if (result != 0)
         return 0;
     return 1;
-}
-
-// Sends one byte
-void send_twi_byte(unsigned char *byte)
-{
-    int i;
-
-    USIDR = *byte;
-
-    for (i = 0; i < 8; ++i) {
-
-        // == Period start
-
-        clock_release();
-        wait_twi_half();
-        clock_down();
-        wait_twi_half();
-
-        // == Period end
-
-        USICR |= (1 << USICLK); // Shift data register
-    }
-
-    // release //!!
-    USIDR = 0xFF;
-
-    reset_twi_status_register();
-
-    // Check result ... //!! TODO
 }
 
 static void wait_twi(void)
@@ -211,13 +227,11 @@ static void wait_twi_half(void)
 static void data_release(void)
 {
     PORT_TWI |= (1 << SDA);
-    //while (!(PIN_TWI & (1 << SDA))); // Wait until SDA is 1
 }
 
 static void data_down(void)
 {
     PORT_TWI &= ~(1 << SDA);
-    //while ((PIN_TWI & (1 << SDA))); // Wait until SDA is 0
 }
 
 static void clock_release(void)
