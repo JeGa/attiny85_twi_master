@@ -9,6 +9,7 @@ int main(void)
 {
     twi_connection_t con;
     unsigned char data;
+    int i;
 
     // Indicate start
     led_blink(5);
@@ -19,21 +20,35 @@ int main(void)
     if (!start_twi(&con))
         led_blink_error();
     else {
-        _delay_ms(300);
-        data = 0b11111111;
+        // System set
+        _delay_ms(10);
+        data = 0b00100001;
         send_twi(&data, 1);
-        _delay_ms(300);
-        data = 0b11111111;
+        stop_twi();
+
+        _delay_ms(10);
+        start_twi(&con);
+        // Display setup
+        data = 0b10000001;
         send_twi(&data, 1);
-        _delay_ms(300);
-        data = 0b11111111;
+        stop_twi();
+
+
+        start_twi(&con);
+        // Send start addr.
+        _delay_ms(10);
+        data = 0b00000000;
         send_twi(&data, 1);
-        _delay_ms(300);
-        data = 0b11111111;
-        send_twi(&data, 1);
+
+        // All to 0
+        for (i = 0; i < 16; ++i) {
+            data = 0b10010111;
+            send_twi(&data, 1);
+        }
+
+        stop_twi();
     }
 
-    _delay_ms(1000);
     stop_twi();
 
     while (1) {}

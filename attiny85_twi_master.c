@@ -110,7 +110,7 @@ void send_twi(unsigned char *buffer, int size)
 
 static int send_start_condition(void)
 {
-    _delay_ms(500);
+    //_delay_ms(200);
 
     // == Period start
 
@@ -139,11 +139,11 @@ static int send_address(twi_connection_t *con)
 {
     int result;
 
-    _delay_ms(500);
+    _delay_ms(10);
 
     result = send_twi_byte(&(con->send_data));
 
-    _delay_ms(500);
+    _delay_ms(10);
 
     return result;
 }
@@ -174,7 +174,7 @@ static int send_twi_byte(unsigned char *byte)
 
     reset_twi_status_register();
 
-    _delay_ms(200);
+    _delay_ms(10);
 
     return get_ack();
 }
