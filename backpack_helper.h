@@ -9,6 +9,10 @@
 
 #include "attiny85_twi_master.h"
 
+#define LED_ON 0xFF
+#define LED_OFF 0x0
+
 int init_bp(twi_connection_t *con);
+int led_all_bp(twi_connection_t *con, unsigned char state);
 
 #endif

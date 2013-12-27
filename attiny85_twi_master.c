@@ -174,7 +174,7 @@ static int send_twi_byte(unsigned char *byte)
 
     reset_twi_status_register();
 
-    _delay_ms(10);
+    //_delay_ms(10);
 
     return get_ack();
 }
@@ -219,14 +219,14 @@ static int get_ack(void)
 
 static void wait_twi(void)
 {
-    _delay_us(TWI_CLOCK);
+    _delay_us(WAIT_TIME);
 }
 
  */
 
 static void wait_twi_half(void)
 {
-    _delay_us(TWI_CLOCK/2.0);
+    _delay_us(WAIT_TIME/2.0);
 }
 
 static void data_release(void)

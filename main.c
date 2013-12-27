@@ -19,37 +19,18 @@ int main(void)
     init_twi_connection(&con, SLAVE_ADDRESS, TWI_WRITE);
     init_twi();
 
-    if (!init_bp(&con))
+    if (!init_bp(&con)) {
         led_blink_error();
-    else {
-        // Send start addr.
-        start_twi(&con);
-        _delay_ms(10);
-        data = 0b00000000;
-        send_twi(&data, 1);
-
-        for (i = 0; i < 16; ++i) {
-            data = 0b11100111;
-            send_twi(&data, 1);
-        }
-
         stop_twi();
-
-        for (i = 0; i < 5; ++i) {
-        start_twi(&con);
-        data = 0b00000000;
-        send_twi(&data, 1);
-        data = i+2;
-        send_twi(&data, 1);
-        data = i+1;
-        send_twi(&data, 1);
-        stop_twi();
+    } else {
+        // Blink yeah
+        for (i = 0; i < 10; ++i) {
+            led_all_bp(&con, LED_ON);
+            _delay_ms(500);
+            led_all_bp(&con, LED_OFF);
+            _delay_ms(500);
         }
-
-
     }
-
-    stop_twi();
 
     while (1) {}
 }

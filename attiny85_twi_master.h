@@ -21,7 +21,7 @@
 #define TWI_CLOCK 100000 // Hz
 
 //  Standard mode (not a very precise calculation)
-#define WAIT_TIME ((1/TWI_CLOCK) * 1000000) // us
+#define WAIT_TIME ((1.0/TWI_CLOCK) * 1000 * 1000) // us
 
 #define TWI_READ 1
 #define TWI_WRITE 0

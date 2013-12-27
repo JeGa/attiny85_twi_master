@@ -20,6 +20,23 @@ int init_bp(twi_connection_t *con)
     return 1;
 }
 
+int led_all_bp(twi_connection_t *con, unsigned char state)
+{
+        unsigned char addr = 0b00000000;
+        int i;
+
+        start_twi(con);
+        send_twi(&addr , 1);
+
+        for (i = 0; i < 16; ++i) {
+            send_twi(&state, 1);
+        }
+
+        stop_twi();
+
+        return 1; //!! TODO
+}
+
 /*
  * One byte command.
  */
