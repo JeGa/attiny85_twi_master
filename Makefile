@@ -80,7 +80,7 @@ OBJDIR = .
 
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC = $(TARGET).c attiny85_twi_master.c trinket_helper.c
+SRC = $(TARGET).c attiny85_twi_master.c trinket_helper.c backpack_helper.c
 
 
 # List C++ source files here. (C dependencies are automatically generated.)

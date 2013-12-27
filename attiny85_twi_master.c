@@ -1,10 +1,9 @@
 /*
- * SDA can be set with SDA register or Port register. However,
+ * SDA can be set with USIDR or PORTB register. However,
  * be careful because SDA ans SCL are open collector outputs.
  * -> This means the bus is a logical AND!
  *
- * 1 -> released state for SDA and SCL
- *
+ * 1 -> released state for SDA and SCL.
  * SDA has to be released after each pull.
  */
 
@@ -13,11 +12,10 @@
 
 // Static prototypes
 static int send_start_condition(void);
-static int send_address(twi_connection_t *con);
 static int send_twi_byte(unsigned char *byte);
 static int get_ack(void);
 
-static void wait_twi(void);
+//static void wait_twi(void);
 static void wait_twi_half(void);
 static void clock_release(void);
 static void clock_down(void);
@@ -44,7 +42,7 @@ void init_twi(void)
     // Set the control register
     USICR = (0 << USISIE) | (0 << USIOIE) | // Disable interrupts
             (1 << USIWM1) | (0 << USIWM0) | // TW-Mode
-            (0 << USICS1) | (0 << USICS0); // | (0 << USICLK); // Software strobe
+            (0 << USICS1) | (0 << USICS0); // | (0 << USICLK); // Software strobe //!! TODO
 
     // Clear flags and reset counter
     reset_twi_status_register();
@@ -53,8 +51,7 @@ void init_twi(void)
 /*
  * Initializes the connection struct.
  */
-void init_twi_connection(
-    twi_connection_t *con,
+void init_twi_connection(twi_connection_t *con,
     unsigned char addr,
     unsigned char rw)
 {
@@ -71,7 +68,8 @@ int start_twi(twi_connection_t *con)
     if (!send_start_condition())
         return 0;
 
-    return send_address(con);
+    // Send the slave address with R/W Bit
+    return send_twi_byte(&(con->send_data));
 }
 
 /*
@@ -94,13 +92,31 @@ int stop_twi(void)
     if (!(USISR & (1 << USIPF)))
         return 0;
 
+    reset_twi_status_register();
+
     return 1;
 }
 
-//!! TODO
-void send_twi(unsigned char *buffer, int size)
+/*
+ * Sends the data in the buffer (with size "size")s over the I2C bus.
+ * (Needs previous called start_twi()).
+ */
+int send_twi(unsigned char *buffer, int size)
 {
-    send_twi_byte(buffer);
+    int i, result;
+
+    if (size <= 0)
+        return 0;
+
+    for (i = 0; i < size; ++i) {
+        result = send_twi_byte(&buffer[i]);
+
+        if (!result) {
+            // Failure
+            break;
+        }
+    }
+    return result;
 }
 
 // ===================================================================
@@ -109,8 +125,6 @@ void send_twi(unsigned char *buffer, int size)
 
 static int send_start_condition(void)
 {
-    //_delay_ms(200);
-
     // == Period start
 
     // Start condition
@@ -134,19 +148,6 @@ static int send_start_condition(void)
     return 1;
 }
 
-static int send_address(twi_connection_t *con)
-{
-    int result;
-
-    _delay_ms(10);
-
-    result = send_twi_byte(&(con->send_data));
-
-    _delay_ms(10);
-
-    return result;
-}
-
 // Sends one byte and checks ack.
 static int send_twi_byte(unsigned char *byte)
 {
@@ -168,7 +169,7 @@ static int send_twi_byte(unsigned char *byte)
         USICR |= (1 << USICLK); // Shift data register
     }
 
-    // release
+    // Release SDA
     USIDR = 0xFF;
 
     reset_twi_status_register();
@@ -201,7 +202,7 @@ static int get_ack(void)
     // Save the result
     result = USIDR;
 
-    // release
+    // Release SDA
     USIDR = 0xFF;
 
     // SDA as output
@@ -213,14 +214,19 @@ static int get_ack(void)
     return 1;
 }
 
+/*
+ * Unused.
+
 static void wait_twi(void)
 {
     _delay_us(TWI_CLOCK);
 }
 
+ */
+
 static void wait_twi_half(void)
 {
-    _delay_us(TWI_CLOCK/2);
+    _delay_us(TWI_CLOCK/2.0);
 }
 
 static void data_release(void)

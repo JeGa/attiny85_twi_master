@@ -2,6 +2,7 @@
 #include <util/delay.h>
 #include "attiny85_twi_master.h"
 #include "trinket_helper.h"
+#include "backpack_helper.h"
 
 #define SLAVE_ADDRESS 0x70
  
@@ -14,39 +15,38 @@ int main(void)
     // Indicate start
     led_blink(5);
 
+    // Initialization
     init_twi_connection(&con, SLAVE_ADDRESS, TWI_WRITE);
     init_twi();
 
-    if (!start_twi(&con))
+    if (!init_bp(&con))
         led_blink_error();
     else {
-        // System set
-        _delay_ms(10);
-        data = 0b00100001;
-        send_twi(&data, 1);
-        stop_twi();
-
-        _delay_ms(10);
-        start_twi(&con);
-        // Display setup
-        data = 0b10000001;
-        send_twi(&data, 1);
-        stop_twi();
-
-
-        start_twi(&con);
         // Send start addr.
+        start_twi(&con);
         _delay_ms(10);
         data = 0b00000000;
         send_twi(&data, 1);
 
-        // All to 0
         for (i = 0; i < 16; ++i) {
-            data = 0b10010111;
+            data = 0b11100111;
             send_twi(&data, 1);
         }
 
         stop_twi();
+
+        for (i = 0; i < 5; ++i) {
+        start_twi(&con);
+        data = 0b00000000;
+        send_twi(&data, 1);
+        data = i+2;
+        send_twi(&data, 1);
+        data = i+1;
+        send_twi(&data, 1);
+        stop_twi();
+        }
+
+
     }
 
     stop_twi();
