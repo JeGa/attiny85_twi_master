@@ -14,5 +14,8 @@
 
 int init_bp(twi_connection_t *con);
 int led_all_bp(twi_connection_t *con, unsigned char state);
+int led_row_bp(twi_connection_t *con,
+    unsigned char row,
+    unsigned char state);
 
 #endif

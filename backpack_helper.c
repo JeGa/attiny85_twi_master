@@ -37,6 +37,22 @@ int led_all_bp(twi_connection_t *con, unsigned char state)
         return 1; //!! TODO
 }
 
+int led_row_bp(twi_connection_t *con,
+    unsigned char row,
+    unsigned char state)
+{
+        unsigned char addr = row;
+        int i;
+
+        start_twi(con);
+        send_twi(&addr , 1);
+        send_twi(&state, 1);
+        send_twi(&state, 1);
+        stop_twi();
+
+        return 1; //!! TODO
+}
+
 /*
  * One byte command.
  */
